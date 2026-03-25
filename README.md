@@ -63,7 +63,3 @@ python eval_test.py
 
 - Model quality depends on dataset and training setup
 - Large models require strong compute resources
-
-## License
-
-Add your license here.
