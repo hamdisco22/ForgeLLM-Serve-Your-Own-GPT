@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Local Chatbot</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial;margin:0;background:#0b0f17;color:#e8eefc}
+    .wrap{max-width:900px;margin:0 auto;height:100vh;display:flex;flex-direction:column}
+    header{padding:14px 18px;border-bottom:1px solid #1f2a44;display:flex;gap:10px;align-items:center}
+    header .dot{width:10px;height:10px;border-radius:999px;background:#45f08d}
+    #chat{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+    .msg{max-width:78%;padding:12px 14px;border-radius:16px;line-height:1.35;white-space:pre-wrap}
+    .user{align-self:flex-end;background:#2a3553}
+    .bot{align-self:flex-start;background:#121a2b;border:1px solid #1f2a44}
+    .bar{padding:14px 18px;border-top:1px solid #1f2a44;display:flex;gap:10px}
+    input{flex:1;background:#0f1627;border:1px solid #1f2a44;color:#e8eefc;border-radius:14px;padding:12px 12px;outline:none}
+    button{background:#3b82f6;border:none;color:white;padding:12px 14px;border-radius:14px;cursor:pointer}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .hint{opacity:.7;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><div class="dot"></div><div>
+      <div><b>My Local Chatbot</b></div>
+      <div class="hint">FastAPI + your GPT checkpoint</div>
+    </div></header>
+
+    <div id="chat"></div>
+
+    <div class="bar">
+      <input id="inp" placeholder="Type a message… (e.g., Explain neural networks)" />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+<script>
+const chat = document.getElementById('chat');
+const inp = document.getElementById('inp');
+const send = document.getElementById('send');
+
+function addMsg(text, cls){
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function doSend(){
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value = '';
+  addMsg(msg, 'user');
+  send.disabled = true;
+
+  addMsg("…", 'bot');
+  const lastBot = chat.lastChild;
+
+  try{
+    const r = await fetch('http://127.0.0.1:8000/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, max_new_tokens: 220, temperature: 0.8, top_k: 50 })
+    });
+    const j = await r.json();
+    lastBot.textContent = j.answer || "(empty)";
+  }catch(e){
+    lastBot.textContent = "Error: " + e.message;
+  }finally{
+    send.disabled = false;
+  }
+}
+
+send.onclick = doSend;
+inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doSend(); });
+addMsg("Hi! Ask me something.", "bot");
+</script>
+</body>
+</html>
